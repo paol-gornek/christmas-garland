@@ -1,0 +1,10 @@
+# Visual Studio Code settings
+.vscode/
+
+# ESP-IDF generated files and dependencies
+managed_components/
+build/
+
+# Python 
+venv/
+__pycache__/

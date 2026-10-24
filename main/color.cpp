@@ -19,7 +19,7 @@ const Color colors[] = {
 };
 #define NUM_COLORS (sizeof(colors)/sizeof(colors[0]))
 
-void color_task(void *pvParameters)
+void color_listener(void *pvParameters)
 {
     ParamsThread_t *thread_params = (ParamsThread_t *)pvParameters;
 
@@ -28,18 +28,17 @@ void color_task(void *pvParameters)
     while (1) {
         bool now = gpio_get_level(COLOR_PIN);
 
-	// Lock the mutex
-	xSemaphoreTake( thread_params->my_mutex, portMAX_DELAY );
-
         if (now == 0 && last == 1) {
+            // Lock the mutex
+	        xSemaphoreTake( thread_params->my_mutex, portMAX_DELAY );
+
             thread_params->my_params->color_index = (thread_params->my_params->color_index + 1) % NUM_COLORS;
             ESP_LOGI("COLOR", "Color index=%d", thread_params->my_params->color_index);
             thread_params->my_params->led_update_needed = true;
+
+            // Unlock the mutex
+	        xSemaphoreGive( thread_params->my_mutex );
         }
-
-	// Unlock the mutex
-	xSemaphoreGive( thread_params->my_mutex );
-
         last = now;
         vTaskDelay(pdMS_TO_TICKS(150));
     }

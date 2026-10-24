@@ -36,19 +36,19 @@ struct ParamsThread_t {
 };
 
 
-void speed_task(void *arg);
-void color_task(void *arg);
-void brightness_task(void *arg);
-void animation_mode_task(void *arg);
+void speed_listener(void *arg);
+void color_listener(void *arg);
+void brightness_listener(void *arg);
+void animation_listener(void *arg);
 
 
 void anim_fill_step(Params_t p);
 void anim_scanner_step(Params_t p);
 void anim_blink_step(Params_t p);
+void anim_rainbow_step(Params_t p);
 void anim_halloween_step(Params_t p);
 void anim_halloween_pulse_step(Params_t p);
 void anim_ghost_step(Params_t p);
 void anim_random_points_step(Params_t p);
-void anim_rainbow_step(Params_t p);
 
 #endif

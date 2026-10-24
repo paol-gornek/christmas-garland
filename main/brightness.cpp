@@ -5,7 +5,7 @@
 #include "esp_log.h"
 #include "christmas_garland.h"
 
-void brightness_task(void *pvParameters)
+void brightness_listener(void *pvParameters)
 {
     ParamsThread_t *thread_params = (ParamsThread_t *)pvParameters;
 
@@ -22,8 +22,8 @@ void brightness_task(void *pvParameters)
         if (now == 1 && last == 0) {
             TickType_t duration = xTaskGetTickCount() - press_time;
 
-	    // Lock the mutex
-	    xSemaphoreTake( thread_params->my_mutex, portMAX_DELAY );
+            // Lock the mutex
+            xSemaphoreTake( thread_params->my_mutex, portMAX_DELAY );
 
             if (duration > pdMS_TO_TICKS(700)) {
                 thread_params->my_params->brightness = ( thread_params->my_params->brightness <= 51) ? 255 : thread_params->my_params->brightness - 51;
@@ -35,12 +35,9 @@ void brightness_task(void *pvParameters)
 
             thread_params->my_params->led_update_needed = true;
 	    
-	    // Unlock the mutex
-	    xSemaphoreGive( thread_params->my_mutex );
-
-
+            // Unlock the mutex
+            xSemaphoreGive( thread_params->my_mutex );
         }
-
         last = now;
         vTaskDelay(pdMS_TO_TICKS(30));
     }

@@ -35,7 +35,7 @@ static Color wheel(uint8_t pos)
     };
 }
 
-void animation_mode_task(void *pvParameters)
+void animation_listener(void *pvParameters)
 {
     ParamsThread_t *thread_params = (ParamsThread_t *)pvParameters;
     bool last = 1;
@@ -43,18 +43,17 @@ void animation_mode_task(void *pvParameters)
     while (1) {
         bool now = gpio_get_level(MODE_PIN);
 
-	// Lock the mutex
-	xSemaphoreTake( thread_params->my_mutex, portMAX_DELAY );
-
         if (now == 0 && last == 1) {
+            // Lock the mutex
+	        xSemaphoreTake( thread_params->my_mutex, portMAX_DELAY );
+
             thread_params->my_params->mode = (thread_params->my_params->mode + 1 > 8) ? 1 :  thread_params->my_params->mode + 1;
             ESP_LOGI("MODE", "Mode=%d", thread_params->my_params->mode);
             thread_params->my_params->led_update_needed = true;
+            
+            // Unlock the mutex
+	        xSemaphoreGive( thread_params->my_mutex );
         }
-
-	// Unlock the mutex
-	xSemaphoreGive( thread_params->my_mutex );
-
         last = now;
         vTaskDelay(pdMS_TO_TICKS(200));
     }
@@ -113,6 +112,23 @@ void anim_blink_step(Params_t p)
 
     led_strip_refresh(strip);
     on = !on;
+}
+
+void anim_rainbow_step(Params_t p)
+{
+    static uint8_t offset = 0;
+
+    for (int i = 0; i < NUM_LEDS; i++) {
+        Color c = wheel(i * 256 / NUM_LEDS + offset);
+        c.r = (c.r * p.brightness) / 255;
+        c.g = (c.g * p.brightness) / 255;
+        c.b = (c.b * p.brightness) / 255;
+
+        led_strip_set_pixel(strip, i, c.r, c.g, c.b);
+    }
+
+    led_strip_refresh(strip);
+    offset++;
 }
 
 void anim_halloween_step(Params_t p)
@@ -315,19 +331,4 @@ void anim_random_points_step(Params_t p)
     led_strip_refresh(strip);
 }
 
-void anim_rainbow_step(Params_t p)
-{
-    static uint8_t offset = 0;
 
-    for (int i = 0; i < NUM_LEDS; i++) {
-        Color c = wheel(i * 256 / NUM_LEDS + offset);
-        c.r = (c.r * p.brightness) / 255;
-        c.g = (c.g * p.brightness) / 255;
-        c.b = (c.b * p.brightness) / 255;
-
-        led_strip_set_pixel(strip, i, c.r, c.g, c.b);
-    }
-
-    led_strip_refresh(strip);
-    offset++;
-}

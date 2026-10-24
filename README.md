@@ -50,17 +50,28 @@ Each of the four control buttons runs in its own FreeRTOS task (thread), allowin
 ## Build
 
 Activate the ESP-IDF environment:
-
 *   ```bash
     source "$HOME/.espressif/v6.1/esp-idf/export.sh"
     ```
+
+Build / Flash the project:
 *   ```bash
     idf.py build
     ```
 *   ```bash
     idf.py -p /dev/ttyXXX flash
     ```
+
+Display serial output:
 *   ```bash
     idf.py monitor
     ```
     *Ctrl + ] - to exit the monitor*
+
+Clean the project, delete build output files or entire build directory:
+*   ```bash
+    idf.py -p /dev/ttyXXX flash
+    ```
+*   ```bash
+    idf.py fullclean
+    ```

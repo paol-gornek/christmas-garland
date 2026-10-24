@@ -12,7 +12,7 @@ Color led_state[NUM_LEDS]; // couleur actuelle de chaque LED
 Params_t Params = {
     .brightness = 102,
     .color_index = 255,
-    .mode = 1,
+    .mode = 0,
     .speed = 100,
     .led_update_needed = true
 };
@@ -26,13 +26,13 @@ ParamsThread_t ParamsThread = {
 };
 
 
-void led_task(void *pvParameters)
+void led_controller_task(void *pvParameters)
 {
     ParamsThread_t *thread_params = (ParamsThread_t *)pvParameters;
-    Params_t local_params;
 
     while (1) {
-
+        
+        Params_t local_params;
         // Copy the settings (quick)
         xSemaphoreTake(thread_params->my_mutex, portMAX_DELAY);
         local_params = *thread_params->my_params;
@@ -40,15 +40,15 @@ void led_task(void *pvParameters)
 
         // Select the animation based on the mode
         switch (local_params.mode) {
-    	    case 0: anim_fill_step(local_params);    break;
-    	    case 1: anim_scanner_step(local_params); break;
-    	    case 2: anim_blink_step(local_params);   break;
-    	    case 3: anim_rainbow_step(local_params); break;
-            case 4: anim_halloween_step(local_params); break;
-    	    case 5: anim_halloween_pulse_step(local_params); break;
-    	    case 6: anim_ghost_step(local_params); break;
-	}
-
+    	    case 0: anim_fill_step(local_params);               break;
+    	    case 1: anim_scanner_step(local_params);            break;
+    	    case 2: anim_blink_step(local_params);              break;
+    	    case 3: anim_rainbow_step(local_params);            break;
+            case 4: anim_halloween_step(local_params);          break;
+    	    case 5: anim_halloween_pulse_step(local_params);    break;
+    	    case 6: anim_ghost_step(local_params);              break;
+            case 7: anim_random_points_step(local_params);      break;
+	    }
         vTaskDelay(pdMS_TO_TICKS(local_params.speed));
     }
 }
@@ -89,9 +89,9 @@ extern "C" void app_main()
     led_strip_new_rmt_device(&strip_config, &rmt_config, &strip);
 
     // ---- TASKS ----
-    xTaskCreatePinnedToCore(led_task, "led_task", 4096, &ParamsThread, 5, NULL, 0);
-    xTaskCreatePinnedToCore(brightness_task, "brightness_task", 2048, &ParamsThread, 3, NULL, 1);
-    xTaskCreatePinnedToCore(color_task, "color_task", 2048, &ParamsThread, 3, NULL, 1);
-    xTaskCreatePinnedToCore(speed_task, "speed_task", 2048, &ParamsThread, 3, NULL, 1);
-    xTaskCreatePinnedToCore(animation_mode_task, "animation_mode_task", 2048, &ParamsThread, 3, NULL, 1);
+    xTaskCreatePinnedToCore(led_controller_task, "led_controller_task", 4096, &ParamsThread, 3, NULL, 0);
+    xTaskCreatePinnedToCore(brightness_listener, "brightness_listener", 2048, &ParamsThread, 2, NULL, 1);
+    xTaskCreatePinnedToCore(color_listener, "color_listener", 2048, &ParamsThread, 2, NULL, 1);
+    xTaskCreatePinnedToCore(speed_listener, "speed_listener", 2048, &ParamsThread, 2, NULL, 1);
+    xTaskCreatePinnedToCore(animation_listener, "animation_listener", 2048, &ParamsThread, 2, NULL, 1);
 }

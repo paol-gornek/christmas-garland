@@ -35,41 +35,17 @@ static Color wheel(uint8_t pos)
     };
 }
 
-void animation_listener(void *pvParameters)
-{
-    ParamsThread_t *thread_params = (ParamsThread_t *)pvParameters;
-    bool last = 1;
-
-    while (1) {
-        bool now = gpio_get_level(MODE_PIN);
-
-        if (now == 0 && last == 1) {
-            // Lock the mutex
-	        xSemaphoreTake( thread_params->my_mutex, portMAX_DELAY );
-
-            thread_params->my_params->mode = (thread_params->my_params->mode + 1 > MAX_ANIM_COUNT) ? MIN_ANIM_COUNT :  thread_params->my_params->mode + 1;
-            ESP_LOGI("MODE", "Mode=%d", thread_params->my_params->mode);
-            
-            // Unlock the mutex
-	        xSemaphoreGive( thread_params->my_mutex );
-            xTaskNotifyGive(led_controller_task_handle);
-        }
-        last = now;
-        vTaskDelay(pdMS_TO_TICKS(50));
-    }
-}
-
-void anim_fill_step(Params_t p)
+void anim_fill_step(LedParameters_t params)
 {
     static int i = 0;
 
-    Color base = colors[p.color_index];
-    uint8_t r = (base.r * p.brightness) / 255;
-    uint8_t g = (base.g * p.brightness) / 255;
-    uint8_t b = (base.b * p.brightness) / 255;
+    Color base = colors[params.color_index].second;
+    uint8_t r = (base.r * params.brightness) / 255;
+    uint8_t g = (base.g * params.brightness) / 255;
+    uint8_t b = (base.b * params.brightness) / 255;
 
-    led_strip_set_pixel(strip, i, r, g, b);
-    led_strip_refresh(strip);
+    led_strip_set_pixel(strip_handle, i, r, g, b);
+    led_strip_refresh(strip_handle);
 
     i++;
     if (i >= NUM_LEDS)
@@ -77,20 +53,20 @@ void anim_fill_step(Params_t p)
 }
 
 
-void anim_scanner_step(Params_t p)
+void anim_scanner_step(LedParameters_t params)
 {
     static int pos = 0;
     static int dir = 1;
 
-    led_strip_clear(strip);
+    led_strip_clear(strip_handle);
 
-    Color base = colors[p.color_index];
-    uint8_t r = (base.r * p.brightness) / 255;
-    uint8_t g = (base.g * p.brightness) / 255;
-    uint8_t b = (base.b * p.brightness) / 255;
+    Color base = colors[params.color_index].second;
+    uint8_t r = (base.r * params.brightness) / 255;
+    uint8_t g = (base.g * params.brightness) / 255;
+    uint8_t b = (base.b * params.brightness) / 255;
 
-    led_strip_set_pixel(strip, pos, r, g, b);
-    led_strip_refresh(strip);
+    led_strip_set_pixel(strip_handle, pos, r, g, b);
+    led_strip_refresh(strip_handle);
 
     pos += dir;
     if (pos == NUM_LEDS - 1 || pos == 0)
@@ -98,40 +74,40 @@ void anim_scanner_step(Params_t p)
 }
 
 
-void anim_blink_step(Params_t p)
+void anim_blink_step(LedParameters_t params)
 {
     static bool on = false;
 
-    Color base = colors[p.color_index];
-    uint8_t r = on ? (base.r * p.brightness) / 255 : 0;
-    uint8_t g = on ? (base.g * p.brightness) / 255 : 0;
-    uint8_t b = on ? (base.b * p.brightness) / 255 : 0;
+    Color base = colors[params.color_index].second;
+    uint8_t r = on ? (base.r * params.brightness) / 255 : 0;
+    uint8_t g = on ? (base.g * params.brightness) / 255 : 0;
+    uint8_t b = on ? (base.b * params.brightness) / 255 : 0;
 
     for (int i = 0; i < NUM_LEDS; i++)
-        led_strip_set_pixel(strip, i, r, g, b);
+        led_strip_set_pixel(strip_handle, i, r, g, b);
 
-    led_strip_refresh(strip);
+    led_strip_refresh(strip_handle);
     on = !on;
 }
 
-void anim_rainbow_step(Params_t p)
+void anim_rainbow_step(LedParameters_t params)
 {
     static uint8_t offset = 0;
 
     for (int i = 0; i < NUM_LEDS; i++) {
         Color c = wheel(i * 256 / NUM_LEDS + offset);
-        c.r = (c.r * p.brightness) / 255;
-        c.g = (c.g * p.brightness) / 255;
-        c.b = (c.b * p.brightness) / 255;
+        c.r = (c.r * params.brightness) / 255;
+        c.g = (c.g * params.brightness) / 255;
+        c.b = (c.b * params.brightness) / 255;
 
-        led_strip_set_pixel(strip, i, c.r, c.g, c.b);
+        led_strip_set_pixel(strip_handle, i, c.r, c.g, c.b);
     }
 
-    led_strip_refresh(strip);
+    led_strip_refresh(strip_handle);
     offset++;
 }
 
-void anim_halloween_step(Params_t p)
+void anim_halloween_step(LedParameters_t params)
 {
     static uint8_t flicker[NUM_LEDS] = {0};
 
@@ -150,17 +126,17 @@ void anim_halloween_step(Params_t p)
             }
         }
 
-        uint8_t r = (255 * p.brightness / 255) * flicker[i] / 255;
-        uint8_t g = ( 80 * p.brightness / 255) * flicker[i] / 255;
+        uint8_t r = (255 * params.brightness / 255) * flicker[i] / 255;
+        uint8_t g = ( 80 * params.brightness / 255) * flicker[i] / 255;
         uint8_t b = 0;
 
-        led_strip_set_pixel(strip, i, r, g, b);
+        led_strip_set_pixel(strip_handle, i, r, g, b);
     }
 
-    led_strip_refresh(strip);
+    led_strip_refresh(strip_handle);
 }
 
-void anim_halloween_pulse_step(Params_t p)
+void anim_halloween_pulse_step(LedParameters_t params)
 {
     static int frame = 0;
 
@@ -172,29 +148,29 @@ void anim_halloween_pulse_step(Params_t p)
         uint8_t g = 0;
         uint8_t b = 0;
 
-        int distance = abs(i - NUM_LEDS / 2);
+        int distance = abs(i - (int)NUM_LEDS / 2);
 
         if (distance < 12) {
-            r = (255 * pulse / 255) * p.brightness / 255;
-            g = (70  * pulse / 255) * p.brightness / 255;
+            r = (255 * pulse / 255) * params.brightness / 255;
+            g = (70  * pulse / 255) * params.brightness / 255;
             b = 0;
         }
 
         else if (esp_random() % 25 == 0) {
-            r = 255 * p.brightness / 255;
-            g = 100 * p.brightness / 255;
+            r = 255 * params.brightness / 255;
+            g = 100 * params.brightness / 255;
             b = 0;
         }
 
-        led_strip_set_pixel(strip, i, r, g, b);
+        led_strip_set_pixel(strip_handle, i, r, g, b);
     }
 
-    led_strip_refresh(strip);
+    led_strip_refresh(strip_handle);
 
     frame++;
 }
 
-void anim_ghost_step(Params_t p)
+void anim_ghost_step(LedParameters_t params)
 {
     static int pos = 0;
     static int dir = 1;
@@ -224,14 +200,14 @@ void anim_ghost_step(Params_t p)
             b = intensity;
         }
 
-        r = (uint16_t)r * p.brightness / 255;
-        g = (uint16_t)g * p.brightness / 255;
-        b = (uint16_t)b * p.brightness / 255;
+        r = (uint16_t)r * params.brightness / 255;
+        g = (uint16_t)g * params.brightness / 255;
+        b = (uint16_t)b * params.brightness / 255;
 
-        led_strip_set_pixel(strip, i, r, g, b);
+        led_strip_set_pixel(strip_handle, i, r, g, b);
     }
 
-    led_strip_refresh(strip);
+    led_strip_refresh(strip_handle);
 
     pos += dir;
 
@@ -245,14 +221,14 @@ void anim_ghost_step(Params_t p)
     }
 }
 
-void anim_random_points_step(Params_t p)
+void anim_random_points_step(LedParameters_t params)
 {
     static int pos[8] = {0, 8, 16, 24, 32, 40, 48, 56};
     static int dir[8] = {1, -1, 1, -1, 1, -1, 1, -1};
     static uint8_t life[8] = {0};
 
     for (int i = 0; i < NUM_LEDS; i++) {
-        led_strip_set_pixel(strip, i, 0, 0, 0);
+        led_strip_set_pixel(strip_handle, i, 0, 0, 0);
     }
 
     for (int j = 0; j < 8; j++) {
@@ -284,11 +260,11 @@ void anim_random_points_step(Params_t p)
                 break;
         }
 
-        r = (uint16_t)r * p.brightness / 255;
-        g = (uint16_t)g * p.brightness / 255;
-        b = (uint16_t)b * p.brightness / 255;
+        r = (uint16_t)r * params.brightness / 255;
+        g = (uint16_t)g * params.brightness / 255;
+        b = (uint16_t)b * params.brightness / 255;
 
-        led_strip_set_pixel(strip, pos[j], r, g, b);
+        led_strip_set_pixel(strip_handle, pos[j], r, g, b);
 
         if (esp_random() % 3 != 0) {
             pos[j] += dir[j];
@@ -310,7 +286,7 @@ void anim_random_points_step(Params_t p)
         life[j]--;
     }
 
-    led_strip_refresh(strip);
+    led_strip_refresh(strip_handle);
 }
 
 

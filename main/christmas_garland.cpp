@@ -8,13 +8,14 @@
 led_strip_handle_t strip = nullptr;
 Color led_state[NUM_LEDS];
 
+TaskHandle_t led_controller_task_handle = nullptr;
+
 // Declaring a global variable
 Params_t Params = {
     .brightness = 102,
     .color_index = 255,
     .mode = 0,
     .speed = 100,
-    .led_update_needed = true
 };
 
 // Creating a mutex
@@ -48,8 +49,11 @@ void led_controller_task(void *pvParameters)
     	    case 5: anim_halloween_pulse_step(local_params);    break;
     	    case 6: anim_ghost_step(local_params);              break;
             case 7: anim_random_points_step(local_params);      break;
+            default:
+                ESP_LOGE("ANIM_COUNT_ERROR", "Value %d, must be between %d and %d", local_params.mode, MIN_ANIM_COUNT, MAX_ANIM_COUNT);
+                break;
 	    }
-        vTaskDelay(pdMS_TO_TICKS(local_params.speed));
+        ulTaskNotifyTake(pdTRUE, pdMS_TO_TICKS(local_params.speed));
     }
 }
 
@@ -89,9 +93,9 @@ extern "C" void app_main()
     led_strip_new_rmt_device(&strip_config, &rmt_config, &strip);
 
     // ---- TASKS ----
-    xTaskCreatePinnedToCore(led_controller_task, "led_controller_task", 4096, &ParamsThread, 3, NULL, 0);
-    xTaskCreatePinnedToCore(brightness_listener, "brightness_listener", 2048, &ParamsThread, 2, NULL, 1);
-    xTaskCreatePinnedToCore(color_listener, "color_listener", 2048, &ParamsThread, 2, NULL, 1);
-    xTaskCreatePinnedToCore(speed_listener, "speed_listener", 2048, &ParamsThread, 2, NULL, 1);
-    xTaskCreatePinnedToCore(animation_listener, "animation_listener", 2048, &ParamsThread, 2, NULL, 1);
+    xTaskCreatePinnedToCore(led_controller_task, "led_controller_task", LED_TASK_STACK_SIZE, &ParamsThread, 3, &led_controller_task_handle, LED_TASK_CORE);
+    xTaskCreatePinnedToCore(brightness_listener, "brightness_listener", BUTTON_TASK_STACK_SIZE, &ParamsThread, 2, NULL, BUTTON_TASK_CORE);
+    xTaskCreatePinnedToCore(color_listener, "color_listener", BUTTON_TASK_STACK_SIZE, &ParamsThread, 2, NULL, BUTTON_TASK_CORE);
+    xTaskCreatePinnedToCore(speed_listener, "speed_listener", BUTTON_TASK_STACK_SIZE, &ParamsThread, 2, NULL, BUTTON_TASK_CORE);
+    xTaskCreatePinnedToCore(animation_listener, "animation_listener", BUTTON_TASK_STACK_SIZE, &ParamsThread, 2, NULL, BUTTON_TASK_CORE);
 }

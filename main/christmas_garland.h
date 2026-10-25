@@ -1,6 +1,8 @@
 #ifndef CHRISTMAS_GARLAND_H
 #define CHRISTMAS_GARLAND_H
 
+#include <stdint.h>
+
 #define TAG "APP"
 
 // ===== CONFIG =====
@@ -13,6 +15,17 @@
 #define SPEED_PIN       GPIO_NUM_25
 
 
+// Task stack sizes (bytes)
+constexpr uint32_t LED_TASK_STACK_SIZE = 4096;
+constexpr uint32_t BUTTON_TASK_STACK_SIZE = 2048;
+
+// ESP32 core number
+constexpr int LED_TASK_CORE = 0;
+constexpr int BUTTON_TASK_CORE = 1;
+
+#define MIN_ANIM_COUNT  0
+#define MAX_ANIM_COUNT  7
+
 // COLOR
 // Color tab
 struct Color { uint8_t r, g, b; };
@@ -22,12 +35,13 @@ extern led_strip_handle_t strip;
 extern const Color colors[];
 extern const std::size_t NUM_COLORS;
 
+extern TaskHandle_t led_controller_task_handle;
+
 struct Params_t {
     uint16_t brightness;
     uint8_t color_index;
     uint8_t mode;
     uint16_t speed;
-    bool led_update_needed;
 };
 
 struct ParamsThread_t {

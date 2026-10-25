@@ -4,6 +4,7 @@
 # ESP-IDF generated files and dependencies
 managed_components/
 build/
+sdkconfig.old
 
 # Python 
 venv/

@@ -32,13 +32,12 @@ void brightness_listener(void *pvParameters)
                 thread_params->my_params->brightness = ( thread_params->my_params->brightness + 51 > 255) ? 51 : thread_params->my_params->brightness + 51;
                 ESP_LOGI("BTN", "Short press → brightness=%d", thread_params->my_params->brightness);
             }
-
-            thread_params->my_params->led_update_needed = true;
 	    
             // Unlock the mutex
             xSemaphoreGive( thread_params->my_mutex );
+            xTaskNotifyGive(led_controller_task_handle);
         }
         last = now;
-        vTaskDelay(pdMS_TO_TICKS(30));
+        vTaskDelay(pdMS_TO_TICKS(50));
     }
 }

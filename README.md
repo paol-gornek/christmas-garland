@@ -68,6 +68,11 @@ Display serial output:
     ```
     *Ctrl + ] - to exit the monitor*
 
+Both:
+*   ```bash
+    idf.py flash && idf.py monitor
+    ```
+
 Clean the project, delete build output files or entire build directory:
 *   ```bash
     idf.py -p /dev/ttyXXX flash

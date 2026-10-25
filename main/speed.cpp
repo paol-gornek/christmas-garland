@@ -20,12 +20,12 @@ void speed_listener(void *pvParameters)
 
             thread_params->my_params->speed = (thread_params->my_params->speed + 100 > 500) ? 100 :  thread_params->my_params->speed + 100;
             ESP_LOGI("SPEED", "Speed=%d", thread_params->my_params->speed);
-            thread_params->my_params->led_update_needed = true;
 
             // Unlock the mutex
 	        xSemaphoreGive( thread_params->my_mutex );
+            xTaskNotifyGive(led_controller_task_handle);
         }
         last = now;
-        vTaskDelay(pdMS_TO_TICKS(200));
+        vTaskDelay(pdMS_TO_TICKS(50));
     }
 }

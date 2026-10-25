@@ -47,15 +47,15 @@ void animation_listener(void *pvParameters)
             // Lock the mutex
 	        xSemaphoreTake( thread_params->my_mutex, portMAX_DELAY );
 
-            thread_params->my_params->mode = (thread_params->my_params->mode + 1 > 8) ? 1 :  thread_params->my_params->mode + 1;
+            thread_params->my_params->mode = (thread_params->my_params->mode + 1 > MAX_ANIM_COUNT) ? MIN_ANIM_COUNT :  thread_params->my_params->mode + 1;
             ESP_LOGI("MODE", "Mode=%d", thread_params->my_params->mode);
-            thread_params->my_params->led_update_needed = true;
             
             // Unlock the mutex
 	        xSemaphoreGive( thread_params->my_mutex );
+            xTaskNotifyGive(led_controller_task_handle);
         }
         last = now;
-        vTaskDelay(pdMS_TO_TICKS(200));
+        vTaskDelay(pdMS_TO_TICKS(50));
     }
 }
 

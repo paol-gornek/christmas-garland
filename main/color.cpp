@@ -34,12 +34,12 @@ void color_listener(void *pvParameters)
 
             thread_params->my_params->color_index = (thread_params->my_params->color_index + 1) % NUM_COLORS;
             ESP_LOGI("COLOR", "Color index=%d", thread_params->my_params->color_index);
-            thread_params->my_params->led_update_needed = true;
 
             // Unlock the mutex
 	        xSemaphoreGive( thread_params->my_mutex );
+            xTaskNotifyGive(led_controller_task_handle);
         }
         last = now;
-        vTaskDelay(pdMS_TO_TICKS(150));
+        vTaskDelay(pdMS_TO_TICKS(50));
     }
 }

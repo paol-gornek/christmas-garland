@@ -36,6 +36,7 @@ void listener(void *pvParameters)
         bool now = gpio_get_level(thread_params->button_PIN);
 
         if (now == 0 && last == 1) {
+            gpio_set_level(LED_BUILTIN, 1);
             // Lock the mutex
 	        xSemaphoreTake( thread_params->mutex, portMAX_DELAY );
 
@@ -68,6 +69,7 @@ void listener(void *pvParameters)
             // Unlock the mutex
 	        xSemaphoreGive( thread_params->mutex );
             xTaskNotifyGive(led_controller_handle);
+            gpio_set_level(LED_BUILTIN, 0);
         }
         last = now;
         vTaskDelay(pdMS_TO_TICKS(50));

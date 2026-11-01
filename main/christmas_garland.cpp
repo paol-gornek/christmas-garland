@@ -66,6 +66,10 @@ extern "C" void app_main()
 {
     ESP_LOGI(APP, "Starting Christmas garland...");
 
+    // ---- GPIO On-board LED configurations ----
+    gpio_reset_pin(LED_BUILTIN);
+    gpio_set_direction(LED_BUILTIN, GPIO_MODE_OUTPUT);
+
     // ---- GPIO common configurations ----
     gpio_config_t io_conf = {
         .pin_bit_mask =

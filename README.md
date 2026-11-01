@@ -1,12 +1,12 @@
-# Christmas Garland 🎄
+# 🎄 Christmas Garland 🎄
 
 A Christmas LED garland project based on an ESP32, developed in C++ using ESP-IDF.
 
-## 🎯 Project Goal
+## Project Goal
 
 The goal of this project is to create a programmable Christmas LED garland with custom lighting effects.
 
-## 🛠️ Development
+## Development
 
 This project uses [ESP-IDF](https://github.com/espressif/esp-idf), Espressif's official development framework for ESP32 devices.
 
@@ -16,12 +16,39 @@ This project uses [ESP-IDF](https://github.com/espressif/esp-idf), Espressif's o
 - Visual Studio Code (optional)
 - An ESP32 development board
 
-## 🔌 Hardware
+## Project Structure
+
+The following tree shows the main directory structure of the project:
+
+```text
+.
+├── CMakeLists.txt
+├── dependencies.lock
+├── docs
+│   └── wiring_diagram.png
+├── main
+│   ├── animation.cpp
+│   ├── christmas_garland.cpp
+│   ├── christmas_garland.h
+│   ├── CMakeLists.txt
+│   └── listeners.cpp
+├── README.md
+└── sdkconfig
+```
+
+Only the main directories and files are shown for clarity. Build files, cache directories, and generated files are omitted.
+
+## Hardware
 
 - ESP32 development board
-- Addressable LED strip with 60 LEDs (WS2812B)
-- 3.7 V, 400 mAh battery
+- Addressable LED strip with 60 LEDs x2 (WS2812B)
 - Slide switch for power control
+
+### Power Supply
+
+- **Default:** 5 V USB power adapter connected via the ESP32 Micro-USB port.
+- **Optional:** 5 V rechargeable battery with a regulated USB output.
+- **LED strip:** Powered via the ESP32 VIN pin.
 
 The electronic schematic is available here:
 
@@ -38,16 +65,19 @@ The electronic schematic is available here:
 |           |             | snake, rainbow, etc.)                    |
 | GPIO 25   | Speed       | Adjusts the speed of the lighting effect |
 
+## Software
+
 ### Button Controls
 
 Each of the four control buttons runs in its own FreeRTOS task (thread), allowing the controls to operate independently.
 
-- **Brightness Button:** Adjusts LED brightness.
-- **Color Button:** Changes the LED color.
-- **Mode Button:** Selects the lighting pattern (e.g., snake, rainbow, etc.).
-- **Speed Button:** Adjusts the speed of the lighting effects.
+- **LED Controller Task**: Controls the LED strip and runs the lighting animations.
+- **Brightness Button Listener**: Adjusts LED brightness.
+- **Color Button Listener**: Changes the LED color.
+- **Mode Button Listener**: Selects the lighting pattern (e.g., snake, rainbow, etc.).
+- **Speed Button Listener**: Adjusts the speed of the lighting effects. 
 
-## Build
+## Build & Flash
 
 Activate the ESP-IDF environment:
 *   ```bash
@@ -80,3 +110,17 @@ Clean the project, delete build output files or entire build directory:
 *   ```bash
     idf.py fullclean
     ```
+
+## References & Resources
+
+Useful documentation and resources that helped during the development of this project.
+
+- [ESP-IDF Programming Guide](https://docs.espressif.com/projects/esp-idf/en/stable/esp32/index.html) - Official ESP-IDF documentation.
+- [ESP32 Datasheet](https://www.espressif.com/sites/default/files/documentation/esp32_datasheet_en.pdf) - ESP32 technical specifications.
+- [ESP32 GPIO](https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/peripherals/gpio.html) - ESP32 GPIO
+- [ESP32 API LED Strip](https://espressif.github.io/idf-extra-components/latest/led_strip/index.html#allocate-led-strip-object-with-rmt-backend) - ESP32 API LED Strip
+- [FreeRTOS with Espressif](https://docs.espressif.com/projects/esp-idf/en/v4.3/esp32/api-reference/system/freertos.html) - FreeRTOS with Espressif
+- [FreeRTOS](https://www.freertos.org/Documentation/02-Kernel/04-API-references/10-Semaphore-and-Mutexes/06-xSemaphoreCreateMutex) - FreeRTOS Semaphore
+- [FreeRTOS](https://www.freertos.org/Documentation/02-Kernel/04-API-references/05-Direct-to-task-notifications/03-ulTaskNotifyTake) - FreeRTOS TaskNotify
+
+

@@ -7,6 +7,9 @@
 #define CFG "CONFIG"
 #define APP "APPLI"
 
+// ---- On-board LED configurations ----
+constexpr gpio_num_t LED_BUILTIN = GPIO_NUM_2;
+
 
 // LED strip configuration and pin definitions
 constexpr gpio_num_t LED_STRIP_DATA_PIN = GPIO_NUM_13;

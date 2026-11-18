@@ -14,10 +14,12 @@ constexpr gpio_num_t LED_BUILTIN = GPIO_NUM_2;
 // LED strip configuration and pin definitions
 constexpr gpio_num_t LED_STRIP_DATA_PIN = GPIO_NUM_13;
 constexpr uint16_t NUM_LEDS = 120;
-constexpr gpio_num_t BRIGHTNESS_PIN = GPIO_NUM_14;
-constexpr gpio_num_t COLOR_PIN = GPIO_NUM_27;
+constexpr gpio_num_t BRIGHTNESS_UP_PIN = GPIO_NUM_32;
+constexpr gpio_num_t BRIGHTNESS_DOWN_PIN = GPIO_NUM_33;
+constexpr gpio_num_t COLOR_PIN = GPIO_NUM_25;
 constexpr gpio_num_t MODE_PIN = GPIO_NUM_26;
-constexpr gpio_num_t SPEED_PIN = GPIO_NUM_25;
+constexpr gpio_num_t SPEED_UP_PIN = GPIO_NUM_27;
+constexpr gpio_num_t SPEED_DOWN_PIN = GPIO_NUM_14;
 
 // Task stack sizes (bytes)
 constexpr uint32_t LED_TASK_STACK_SIZE = 4096;
@@ -31,7 +33,7 @@ constexpr int BUTTON_TASK_CORE = 1;
 constexpr int MIN_BRIGHTNESS = 51;
 constexpr int MAX_BRIGHTNESS = 255;
 constexpr int MIN_MODE_INDEX = 0;
-constexpr int MAX_MODE_INDEX = 7;
+constexpr int MAX_MODE_INDEX = 9;
 constexpr int MIN_SPEED_MS = 100;
 constexpr int MAX_SPEED_MS = 500;
 
@@ -77,5 +79,7 @@ void anim_halloween_step(LedParameters_t params);
 void anim_halloween_pulse_step(LedParameters_t params);
 void anim_ghost_step(LedParameters_t params);
 void anim_random_points_step(LedParameters_t params);
+void anim_breathing_step(LedParameters_t params);
+void anim_stars_step(LedParameters_t params);
 
 #endif

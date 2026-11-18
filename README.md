@@ -41,7 +41,7 @@ Only the main directories and files are shown for clarity. Build files, cache di
 ## Hardware
 
 - ESP32 development board
-- Addressable LED strip with 60 LEDs x2 (WS2812B)
+- Addressable LED strip with 60 LEDs x2 (Model: HD-5V-WS2812E-60L-B-IP30, Brand: BTF-LIGHTING, Color: RGB, )
 - Slide switch for power control
 
 ### Power Supply
@@ -56,14 +56,15 @@ The electronic schematic is available here:
 
 ### ESP32 Pin Configuration
 
-| ESP32 Pin | Function    | Description                              |
-|-----------|-------------|------------------------------------------|
-| GPIO 13   | LED Data    | Sends control data to the LED strip      |
-| GPIO 14   | Brightness  | Adjusts the brightness of the LEDs       |
-| GPIO 27   | Color       | Selects the LED color                    |
-| GPIO 26   | Mode        | Selects the lighting pattern (e.g.       |
-|           |             | snake, rainbow, etc.)                    |
-| GPIO 25   | Speed       | Adjusts the speed of the lighting effect |
+| ESP32 Pin | Function        | Description                                        |
+|-----------|-----------------|----------------------------------------------------|
+| GPIO 13   | LED Data        | Sends control data to the LED strip.               |
+| GPIO 32   | Brightness Up   | Increases the brightness of the LEDs.              |
+| GPIO 33   | Brightness Down | Decreases the brightness of the LEDs.              |
+| GPIO 25   | Color           | Selects the LED color.                             |
+| GPIO 26   | Mode            | Selects the lighting effect (e.g. snake, rainbow). |
+| GPIO 27   | Speed Up        | Increases the speed of the lighting effect.        |
+| GPIO 14   | Speed Down      | Decreases the speed of the lighting effect.        |
 
 ## Software
 

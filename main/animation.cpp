@@ -38,18 +38,31 @@ static Color wheel(uint8_t pos)
 void anim_fill_step(LedParameters_t params)
 {
     static int i = 0;
+    static bool filling = true;
+    static bool forward = true;
 
     Color base = colors[params.color_index].second;
+
     uint8_t r = (base.r * params.brightness) / 255;
     uint8_t g = (base.g * params.brightness) / 255;
     uint8_t b = (base.b * params.brightness) / 255;
 
-    led_strip_set_pixel(strip_handle, i, r, g, b);
+    if (filling)
+        led_strip_set_pixel(strip_handle, i, r, g, b);
+    else
+        led_strip_set_pixel(strip_handle, i, 0, 0, 0);
+
     led_strip_refresh(strip_handle);
 
-    i++;
-    if (i >= NUM_LEDS)
-        i = 0;
+    i += forward ? 1 : -1;
+
+    if (i >= NUM_LEDS || i < 0)
+    {
+        forward = !forward;
+        filling = !filling;
+
+        i = forward ? 0 : NUM_LEDS - 1;
+    }
 }
 
 
@@ -290,3 +303,88 @@ void anim_random_points_step(LedParameters_t params)
 }
 
 
+void anim_breathing_step(LedParameters_t params)
+{
+    static int brightness = 0;
+    static int direction = 1;
+
+    const int step = 5;
+
+    Color base = colors[params.color_index].second;
+
+    uint8_t r = (base.r * brightness * params.brightness) / (255 * 255);
+    uint8_t g = (base.g * brightness * params.brightness) / (255 * 255);
+    uint8_t b = (base.b * brightness * params.brightness) / (255 * 255);
+
+    // Appliquer la même luminosité à toutes les LED
+    for (int i = 0; i < NUM_LEDS; i++)
+    {
+        led_strip_set_pixel(strip_handle, i, r, g, b);
+    }
+
+    led_strip_refresh(strip_handle);
+
+    // Faire varier progressivement la luminosité
+    brightness += direction * step;
+
+    if (brightness >= 255)
+    {
+        brightness = 255;
+        direction = -1;
+    }
+    else if (brightness <= 0)
+    {
+        brightness = 0;
+        direction = 1;
+    }
+}
+
+
+void anim_stars_step(LedParameters_t params)
+{
+    static uint8_t brightness[NUM_LEDS] = {0};
+    static int8_t direction[NUM_LEDS] = {0};
+    static int counter = 0;
+
+    const int max_stars = NUM_LEDS / 8;
+    const int max_brightness = 100;
+    const int step = 2;
+
+    // Choisir de nouvelles étoiles de temps en temps
+    if (counter++ >= 20)
+    {
+        counter = 0;
+
+        int random_led = rand() % NUM_LEDS;
+
+        if (direction[random_led] == 0)
+            direction[random_led] = 1;
+    }
+
+    for (int i = 0; i < NUM_LEDS; i++)
+    {
+        // Faire scintiller les étoiles
+        if (direction[i] != 0)
+        {
+            brightness[i] += direction[i] * step;
+
+            if (brightness[i] >= max_brightness)
+            {
+                brightness[i] = max_brightness;
+                direction[i] = -1;
+            }
+            else if (brightness[i] <= 0)
+            {
+                brightness[i] = 0;
+                direction[i] = 0;
+            }
+        }
+
+        // Appliquer une lumière blanche légèrement chaude
+        uint8_t level = (brightness[i] * params.brightness) / 255;
+
+        led_strip_set_pixel(strip_handle, i, level, level, level);
+    }
+
+    led_strip_refresh(strip_handle);
+}

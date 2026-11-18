@@ -42,9 +42,14 @@ void listener(void *pvParameters)
 
             switch (thread_params->button_PIN)
             {
-            case BRIGHTNESS_PIN:
-                thread_params->params->brightness = ( thread_params->params->brightness + MIN_BRIGHTNESS > MAX_BRIGHTNESS) ? MIN_BRIGHTNESS : thread_params->params->brightness + MIN_BRIGHTNESS;
-                ESP_LOGI("BTN", "Brightness: %d (max=255)", thread_params->params->brightness);
+            case BRIGHTNESS_UP_PIN:
+                thread_params->params->brightness = ( thread_params->params->brightness + MIN_BRIGHTNESS > MAX_BRIGHTNESS) ? MAX_BRIGHTNESS : thread_params->params->brightness + MIN_BRIGHTNESS;
+                ESP_LOGI("BTN", "Brightness Up: %d (max=255)", thread_params->params->brightness);
+                break;
+
+            case BRIGHTNESS_DOWN_PIN:
+                thread_params->params->brightness = ( thread_params->params->brightness - MIN_BRIGHTNESS < MIN_BRIGHTNESS) ? MIN_BRIGHTNESS : thread_params->params->brightness - MIN_BRIGHTNESS;
+                ESP_LOGI("BTN", "Brightness Down: %d (min=51)", thread_params->params->brightness);
                 break;
             
             case COLOR_PIN:
@@ -57,9 +62,14 @@ void listener(void *pvParameters)
                 ESP_LOGI("BTN", "Mode index=%d", thread_params->params->mode);
                 break;
 
-            case SPEED_PIN:
-                thread_params->params->speed = (thread_params->params->speed + MIN_SPEED_MS > MAX_SPEED_MS) ? MIN_SPEED_MS :  thread_params->params->speed + MIN_SPEED_MS;
-                ESP_LOGI("BTN", "Speed: %dms (max=500ms)", thread_params->params->speed);
+            case SPEED_UP_PIN:
+                thread_params->params->speed = (thread_params->params->speed - MIN_SPEED_MS < MIN_SPEED_MS) ? MIN_SPEED_MS :  thread_params->params->speed - MIN_SPEED_MS;
+                ESP_LOGI("BTN", "Speed Up: %dms (min=100ms)", thread_params->params->speed);
+                break;
+            
+            case SPEED_DOWN_PIN:
+                thread_params->params->speed = (thread_params->params->speed + MIN_SPEED_MS > MAX_SPEED_MS) ? MAX_SPEED_MS :  thread_params->params->speed + MIN_SPEED_MS;
+                ESP_LOGI("BTN", "Speed Down: %dms (max=500ms)", thread_params->params->speed);
                 break;
 
             default:

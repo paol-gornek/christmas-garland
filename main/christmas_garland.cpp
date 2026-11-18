@@ -13,7 +13,7 @@ LedParameters_t shared_params = {
     .brightness = 102,
     .color_index = 1,
     .mode = 0,
-    .speed = 100,
+    .speed = 300,
 };
 
 // Creating a mutex
@@ -25,10 +25,12 @@ ControllerTask_t ControllerThread = {
     params_mutex,
 };
 
-ListenerTask_t brightness_config = {&shared_params, params_mutex, BRIGHTNESS_PIN};
+ListenerTask_t brightness_up_config = {&shared_params, params_mutex, BRIGHTNESS_UP_PIN};
+ListenerTask_t brightness_down_config = {&shared_params, params_mutex, BRIGHTNESS_DOWN_PIN};
 ListenerTask_t color_config = {&shared_params, params_mutex, COLOR_PIN};
 ListenerTask_t mode_config = {&shared_params, params_mutex, MODE_PIN};
-ListenerTask_t speed_config = {&shared_params, params_mutex, SPEED_PIN};
+ListenerTask_t speed_up_config = {&shared_params, params_mutex, SPEED_UP_PIN};
+ListenerTask_t speed_down_config = {&shared_params, params_mutex, SPEED_DOWN_PIN};
 
 
 void led_controller_task(void *pvParameters)
@@ -53,6 +55,8 @@ void led_controller_task(void *pvParameters)
     	    case 5: anim_halloween_pulse_step(local_params);    break;
     	    case 6: anim_ghost_step(local_params);              break;
             case 7: anim_random_points_step(local_params);      break;
+            case 8: anim_breathing_step(local_params);          break;
+            case 9: anim_stars_step(local_params);              break;
             default:
                 ESP_LOGE("MODE_INDEX_ERROR", "Value %d, must be between %d and %d", local_params.mode, MIN_MODE_INDEX, MAX_MODE_INDEX);
                 break;
@@ -73,10 +77,12 @@ extern "C" void app_main()
     // ---- GPIO common configurations ----
     gpio_config_t io_conf = {
         .pin_bit_mask =
-            (1ULL << BRIGHTNESS_PIN) |
+            (1ULL << BRIGHTNESS_UP_PIN) |
+            (1ULL << BRIGHTNESS_DOWN_PIN) |
             (1ULL << COLOR_PIN) |
             (1ULL << MODE_PIN) |
-            (1ULL << SPEED_PIN),
+            (1ULL << SPEED_UP_PIN) |
+            (1ULL << SPEED_DOWN_PIN),
         .mode = GPIO_MODE_INPUT,
         .pull_up_en = GPIO_PULLUP_ENABLE,
         .pull_down_en = GPIO_PULLDOWN_DISABLE,
@@ -134,10 +140,12 @@ extern "C" void app_main()
     ESP_LOGI(CFG, "  Color order    : GRB");
 
     ESP_LOGI(CFG, "Button GPIOs:");
-    ESP_LOGI(CFG, "  Brightness     : GPIO %d", (int)BRIGHTNESS_PIN);
-    ESP_LOGI(CFG, "  Color          : GPIO %d", (int)COLOR_PIN);
-    ESP_LOGI(CFG, "  Mode           : GPIO %d", (int)MODE_PIN);
-    ESP_LOGI(CFG, "  Speed          : GPIO %d", (int)SPEED_PIN);
+    ESP_LOGI(CFG, "  Brightness Up   : GPIO %d", (int)BRIGHTNESS_UP_PIN);
+    ESP_LOGI(CFG, "  Brightness Down : GPIO %d", (int)BRIGHTNESS_DOWN_PIN);
+    ESP_LOGI(CFG, "  Color           : GPIO %d", (int)COLOR_PIN);
+    ESP_LOGI(CFG, "  Mode            : GPIO %d", (int)MODE_PIN);
+    ESP_LOGI(CFG, "  Speed Up        : GPIO %d", (int)SPEED_UP_PIN);
+    ESP_LOGI(CFG, "  Speed Down      : GPIO %d", (int)SPEED_DOWN_PIN);
 
     ESP_LOGI(CFG, "GPIO settings:");
     ESP_LOGI(CFG, "  Mode           : INPUT");
@@ -155,10 +163,12 @@ extern "C" void app_main()
     // ---- FreeRTOS task creation and error handling ----
     BaseType_t tab[] = {
         xTaskCreatePinnedToCore(led_controller_task, "led_controller_task", LED_TASK_STACK_SIZE, &ControllerThread, 3, &led_controller_handle, LED_TASK_CORE),
-        xTaskCreatePinnedToCore(listener, "brightness_listener", BUTTON_TASK_STACK_SIZE, &brightness_config, 2, NULL, BUTTON_TASK_CORE),
+        xTaskCreatePinnedToCore(listener, "brightness_up_config", BUTTON_TASK_STACK_SIZE, &brightness_up_config, 2, NULL, BUTTON_TASK_CORE),
+        xTaskCreatePinnedToCore(listener, "brightness_down_config", BUTTON_TASK_STACK_SIZE, &brightness_down_config, 2, NULL, BUTTON_TASK_CORE),
         xTaskCreatePinnedToCore(listener, "color_listener", BUTTON_TASK_STACK_SIZE, &color_config, 2, NULL, BUTTON_TASK_CORE),
         xTaskCreatePinnedToCore(listener, "mode_listener", BUTTON_TASK_STACK_SIZE, &mode_config, 2, NULL, BUTTON_TASK_CORE),
-        xTaskCreatePinnedToCore(listener, "speed_listener", BUTTON_TASK_STACK_SIZE, &speed_config, 2, NULL, BUTTON_TASK_CORE),
+        xTaskCreatePinnedToCore(listener, "speed_up_listener", BUTTON_TASK_STACK_SIZE, &speed_up_config, 2, NULL, BUTTON_TASK_CORE),
+        xTaskCreatePinnedToCore(listener, "speed_down_listener", BUTTON_TASK_STACK_SIZE, &speed_down_config, 2, NULL, BUTTON_TASK_CORE),
     };
 
     std::string result = "";
@@ -167,10 +177,12 @@ extern "C" void app_main()
         if (tab[i] != pdPASS) {
             switch (i) {
                 case 0: result += "led_controller_task, "; break;
-                case 1: result += "brightness_listener, "; break;
-                case 2: result += "color_listener, "; break;
-                case 3: result += "mode_listener, "; break;
-                case 4: result += "speed_listener, "; break;
+                case 1: result += "brightness_up_listener, "; break;
+                case 2: result += "brightness_down_listener, "; break;
+                case 3: result += "color_listener, "; break;
+                case 4: result += "mode_listener, "; break;
+                case 5: result += "speed_up_listener, "; break;
+                case 6: result += "speed_down_listener, "; break;
             }
         }
     }

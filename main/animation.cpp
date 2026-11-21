@@ -1,12 +1,13 @@
+#include <cmath>
+#include "driver/gpio.h"
+#include "esp_log.h"
+#include "esp_random.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "driver/gpio.h"
 #include "led_strip.h"
-#include "esp_log.h"
+
 #include "christmas_garland.h"
 
-#include "esp_random.h"
-#include <cmath>
 
 static Color wheel(uint8_t pos)
 {

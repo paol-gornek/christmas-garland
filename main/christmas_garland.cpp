@@ -1,9 +1,13 @@
+#include "driver/gpio.h"
+#include "esp_log.h"
+#include "esp_random.h"
+#include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "driver/gpio.h"
 #include "led_strip.h"
-#include "esp_log.h"
+
 #include "christmas_garland.h"
+
 
 led_strip_handle_t strip_handle = nullptr;
 TaskHandle_t led_controller_handle = nullptr;
@@ -36,6 +40,8 @@ ListenerTask_t speed_down_config = {&shared_params, params_mutex, SPEED_DOWN_PIN
 void led_controller_task(void *pvParameters)
 {
     ControllerTask_t *thread_params = (ControllerTask_t *)pvParameters;
+    int64_t mode_start_time = 0;
+    bool previous_auto_state = false;
 
     while (1) {
         
@@ -44,6 +50,34 @@ void led_controller_task(void *pvParameters)
         xSemaphoreTake(thread_params->mutex, portMAX_DELAY);
         local_params = *thread_params->params;
         xSemaphoreGive(thread_params->mutex);
+
+        bool current_auto_state = auto_mode.load();
+
+        if (current_auto_state && !previous_auto_state)
+        {
+            mode_start_time = esp_timer_get_time();
+        }
+
+        if (current_auto_state)
+        {
+            int64_t elapsed_time = (esp_timer_get_time() - mode_start_time) / 1000;
+
+            if (elapsed_time >= AUTO_MODE_DURATION_MS)
+            {
+                int value = esp_random() % (MAX_MODE_INDEX + 1);
+
+                xSemaphoreTake(thread_params->mutex, portMAX_DELAY);
+                thread_params->params->mode = value;
+                local_params.mode = value;
+                xSemaphoreGive(thread_params->mutex);
+
+                ESP_LOGW("BTN", "Mode change");
+                ESP_LOGI("BTN", "Mode index=%d", thread_params->params->mode);
+                mode_start_time = esp_timer_get_time();
+            }
+        }
+
+        previous_auto_state = current_auto_state;
 
         // Select the animation based on the mode
         switch (local_params.mode) {

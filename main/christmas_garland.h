@@ -1,6 +1,7 @@
 #ifndef CHRISTMAS_GARLAND_H
 #define CHRISTMAS_GARLAND_H
 
+#include <atomic>
 #include <stdint.h>
 #include <string>
 
@@ -68,6 +69,9 @@ struct ListenerTask_t {
 };
 
 //  task function
+constexpr int LONG_PRESS_DURATION_MS = 1000;
+constexpr int AUTO_MODE_DURATION_MS = 180000;
+extern std::atomic<bool> auto_mode;
 void listener(void *arg);
 
 // LED animation functions

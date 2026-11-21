@@ -1,13 +1,18 @@
+#include "driver/gpio.h"
+#include "esp_log.h"
+#include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "driver/gpio.h"
 #include "led_strip.h"
-#include "esp_log.h"
-#include "christmas_garland.h"
-
 #include <utility>
 
-const std::pair<const char*, Color> colors[] = {
+#include "christmas_garland.h"
+
+
+std::atomic<bool> auto_mode{false};
+
+const std::pair<const char*, Color> colors[] =
+{
     {"red",     {255, 0, 0}},
     {"green",   {0, 255, 0}},
     {"blue",    {0, 0, 255}},
@@ -30,58 +35,106 @@ void listener(void *pvParameters)
 {
     ListenerTask_t *thread_params = (ListenerTask_t *)pvParameters;
 
-    bool last = 1;
+    bool last_state = 1;
+    int64_t press_start_time = 0;
+    bool long_press_detected = false;
 
-    while (1) {
-        bool now = gpio_get_level(thread_params->button_PIN);
+    while (1)
+    {
+        bool current_state = gpio_get_level(thread_params->button_PIN);
 
-        if (now == 0 && last == 1) {
+        // Button pressed
+        if (current_state == 0 && last_state == 1)
+        {
+            press_start_time = esp_timer_get_time();
+            long_press_detected = false;
+        }
+
+        // Button still pressed
+        if (current_state == 0 && !long_press_detected)
+        {
+            int64_t elapsed_time =
+                (esp_timer_get_time() - press_start_time) / 1000;
+
+            if (elapsed_time >= LONG_PRESS_DURATION_MS)
+            {
+                long_press_detected = true;
+            }
+        }
+
+        // Button released
+        if (last_state == 0 && current_state == 1)
+        {
             gpio_set_level(LED_BUILTIN, 1);
             // Lock the mutex
 	        xSemaphoreTake( thread_params->mutex, portMAX_DELAY );
 
-            switch (thread_params->button_PIN)
+            if (!long_press_detected)
             {
-            case BRIGHTNESS_UP_PIN:
-                thread_params->params->brightness = ( thread_params->params->brightness + MIN_BRIGHTNESS > MAX_BRIGHTNESS) ? MAX_BRIGHTNESS : thread_params->params->brightness + MIN_BRIGHTNESS;
-                ESP_LOGI("BTN", "Brightness Up: %d (max=255)", thread_params->params->brightness);
-                break;
+                switch (thread_params->button_PIN)
+                {
+                case BRIGHTNESS_UP_PIN:
+                    thread_params->params->brightness = ( thread_params->params->brightness + MIN_BRIGHTNESS > MAX_BRIGHTNESS) ? MAX_BRIGHTNESS : thread_params->params->brightness + MIN_BRIGHTNESS;
+                    ESP_LOGI("BTN", "Brightness Up: %d (max=255)", thread_params->params->brightness);
+                    break;
 
-            case BRIGHTNESS_DOWN_PIN:
-                thread_params->params->brightness = ( thread_params->params->brightness - MIN_BRIGHTNESS < MIN_BRIGHTNESS) ? MIN_BRIGHTNESS : thread_params->params->brightness - MIN_BRIGHTNESS;
-                ESP_LOGI("BTN", "Brightness Down: %d (min=51)", thread_params->params->brightness);
-                break;
-            
-            case COLOR_PIN:
-                thread_params->params->color_index = (thread_params->params->color_index + 1) % NUM_COLORS;
-                ESP_LOGI("BTN", "Color: %s (index=%d)", colors[thread_params->params->color_index].first, thread_params->params->color_index);
-                break;
+                case BRIGHTNESS_DOWN_PIN:
+                    thread_params->params->brightness = ( thread_params->params->brightness - MIN_BRIGHTNESS < MIN_BRIGHTNESS) ? MIN_BRIGHTNESS : thread_params->params->brightness - MIN_BRIGHTNESS;
+                    ESP_LOGI("BTN", "Brightness Down: %d (min=51)", thread_params->params->brightness);
+                    break;
+                
+                case COLOR_PIN:
+                    thread_params->params->color_index = (thread_params->params->color_index + 1) % NUM_COLORS;
+                    ESP_LOGI("BTN", "Color: %s (index=%d)", colors[thread_params->params->color_index].first, thread_params->params->color_index);
+                    break;
 
-            case MODE_PIN:
-                thread_params->params->mode = (thread_params->params->mode + 1 > MAX_MODE_INDEX) ? MIN_MODE_INDEX :  thread_params->params->mode + 1;
-                ESP_LOGI("BTN", "Mode index=%d", thread_params->params->mode);
-                break;
+                case MODE_PIN:
+                    if (auto_mode.load())
+                    {
+                        ESP_LOGW("BTN", "Stop automatic mode"); 
+                    }
+                    auto_mode.store(false);
+                    thread_params->params->mode = (thread_params->params->mode + 1 > MAX_MODE_INDEX) ? MIN_MODE_INDEX :  thread_params->params->mode + 1;
+                    ESP_LOGI("BTN", "Mode index=%d", thread_params->params->mode);
+                    break;
 
-            case SPEED_UP_PIN:
-                thread_params->params->speed = (thread_params->params->speed - MIN_SPEED_MS < MIN_SPEED_MS) ? MIN_SPEED_MS :  thread_params->params->speed - MIN_SPEED_MS;
-                ESP_LOGI("BTN", "Speed Up: %dms (min=100ms)", thread_params->params->speed);
-                break;
-            
-            case SPEED_DOWN_PIN:
-                thread_params->params->speed = (thread_params->params->speed + MIN_SPEED_MS > MAX_SPEED_MS) ? MAX_SPEED_MS :  thread_params->params->speed + MIN_SPEED_MS;
-                ESP_LOGI("BTN", "Speed Down: %dms (max=500ms)", thread_params->params->speed);
-                break;
+                case SPEED_UP_PIN:
+                    thread_params->params->speed = (thread_params->params->speed - MIN_SPEED_MS < MIN_SPEED_MS) ? MIN_SPEED_MS :  thread_params->params->speed - MIN_SPEED_MS;
+                    ESP_LOGI("BTN", "Speed Up: %dms (min=100ms)", thread_params->params->speed);
+                    break;
+                
+                case SPEED_DOWN_PIN:
+                    thread_params->params->speed = (thread_params->params->speed + MIN_SPEED_MS > MAX_SPEED_MS) ? MAX_SPEED_MS :  thread_params->params->speed + MIN_SPEED_MS;
+                    ESP_LOGI("BTN", "Speed Down: %dms (max=500ms)", thread_params->params->speed);
+                    break;
 
-            default:
-                break;
+                default:
+                    break;
+                }
             }
+            else
+            {
+                switch (thread_params->button_PIN)
+                { 
+                case COLOR_PIN:
+                    ESP_LOGI("BTN", "Color Long press detected");
+                    break;
 
+                case MODE_PIN:
+                    auto_mode.store(true);
+                    ESP_LOGW("BTN", "Start automatic mode"); 
+                    break;
+
+                default:
+                    break;
+                }
+            }
             // Unlock the mutex
-	        xSemaphoreGive( thread_params->mutex );
+            xSemaphoreGive( thread_params->mutex );
             xTaskNotifyGive(led_controller_handle);
             gpio_set_level(LED_BUILTIN, 0);
         }
-        last = now;
+        last_state = current_state;
         vTaskDelay(pdMS_TO_TICKS(50));
     }
 }

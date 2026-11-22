@@ -17,12 +17,12 @@ LedParameters_t shared_params = {
     .brightness = 102,
     .color_index = 1,
     .mode = 0,
+    .theme = 0,
     .speed = 300,
 };
 
 // Creating a mutex
 SemaphoreHandle_t params_mutex = xSemaphoreCreateMutex();
-
 
 ControllerTask_t ControllerThread = {
     &shared_params,
@@ -36,6 +36,25 @@ ListenerTask_t mode_config = {&shared_params, params_mutex, MODE_PIN};
 ListenerTask_t speed_up_config = {&shared_params, params_mutex, SPEED_UP_PIN};
 ListenerTask_t speed_down_config = {&shared_params, params_mutex, SPEED_DOWN_PIN};
 
+Theme themes[] = {
+    {
+        "Default",
+        {0, 1, 2, 3, 8, 9},
+        7
+    },
+    {
+        "Halloween",
+        {4, 5, 6, 7},
+        4
+    },
+    {
+        "Christmas",
+        {10, 11, 12, 13, 14},
+        5
+    }
+};
+
+int NUM_THEMES = (sizeof(themes) / sizeof(themes[0])) - 1;
 
 void led_controller_task(void *pvParameters)
 {
@@ -64,35 +83,41 @@ void led_controller_task(void *pvParameters)
 
             if (elapsed_time >= AUTO_MODE_DURATION_MS)
             {
-                int value = esp_random() % (MAX_MODE_INDEX + 1);
-
                 xSemaphoreTake(thread_params->mutex, portMAX_DELAY);
+                
+                int value = esp_random() % (themes[local_params.theme].mode_count);
                 thread_params->params->mode = value;
                 local_params.mode = value;
                 xSemaphoreGive(thread_params->mutex);
 
-                ESP_LOGW("BTN", "Mode change");
                 ESP_LOGI("BTN", "Mode index=%d", thread_params->params->mode);
+                ESP_LOGI("BTN", "Switching to animation");
                 mode_start_time = esp_timer_get_time();
             }
         }
 
         previous_auto_state = current_auto_state;
+        int animation_id = themes[local_params.theme].modes[local_params.mode];
 
         // Select the animation based on the mode
-        switch (local_params.mode) {
-    	    case 0: anim_fill_step(local_params);               break;
-    	    case 1: anim_scanner_step(local_params);            break;
-    	    case 2: anim_blink_step(local_params);              break;
-    	    case 3: anim_rainbow_step(local_params);            break;
-            case 4: anim_halloween_step(local_params);          break;
-    	    case 5: anim_halloween_pulse_step(local_params);    break;
-    	    case 6: anim_ghost_step(local_params);              break;
-            case 7: anim_random_points_step(local_params);      break;
-            case 8: anim_breathing_step(local_params);          break;
-            case 9: anim_stars_step(local_params);              break;
+        switch (animation_id) {
+    	    case 0: anim_fill_step(local_params);                   break;
+    	    case 1: anim_scanner_step(local_params);                break;
+    	    case 2: anim_blink_step(local_params);                  break;
+    	    case 3: anim_rainbow_step(local_params);                break;
+            case 4: anim_halloween_step(local_params);              break;
+    	    case 5: anim_halloween_pulse_step(local_params);        break;
+    	    case 6: anim_ghost_step(local_params);                  break;
+            case 7: anim_random_points_step(local_params);          break;
+            case 8: anim_breathing_step(local_params);              break;
+            case 9: anim_stars_step(local_params);                  break;
+            case 10: anim_christmas_lights_step(local_params);      break;
+            case 11: anim_candy_cane_step(local_params);            break;
+            case 12: anim_snowfall_step(local_params);              break;
+            case 13: anim_golden_comet_step(local_params);          break;
+            case 14: anim_christmas_sparkles_step(local_params);    break;
             default:
-                ESP_LOGE("MODE_INDEX_ERROR", "Value %d, must be between %d and %d", local_params.mode, MIN_MODE_INDEX, MAX_MODE_INDEX);
+                ESP_LOGE("MODE_INDEX_ERROR", "Value %d, must be between %d and %d", local_params.mode, 0, NUM_MODE);
                 break;
 	    }
         ulTaskNotifyTake(pdTRUE, pdMS_TO_TICKS(local_params.speed));

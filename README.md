@@ -73,10 +73,14 @@ The electronic schematic is available here:
 Each of the four control buttons runs in its own FreeRTOS task (thread), allowing the controls to operate independently.
 
 - **LED Controller Task**: Controls the LED strip and runs the lighting animations.
-- **Brightness Button Listener**: Adjusts LED brightness.
-- **Color Button Listener**: Changes the LED color.
-- **Mode Button Listener**: Selects the lighting pattern (e.g., snake, rainbow, etc.).
-- **Speed Button Listener**: Adjusts the speed of the lighting effects. 
+- **Brightness Up / Down Buttons Listener**: Adjusts LED brightness.
+- **Color Button Listener**:
+  - Short press: Changes the LED color.
+  - Long press: Switches to the next theme.
+- **Mode Button Listener**:
+  - Short press: Switches to the next lighting mode within the current theme (e.g., snake, rainbow, etc.).
+  - Long press: Activates automatic mode, which periodically switches between lighting modes.
+- **Speed Up / Down Buttons Listener**: Adjusts the speed of the lighting effects. 
 
 ## Build & Flash
 

@@ -74,39 +74,54 @@ void listener(void *pvParameters)
                 switch (thread_params->button_PIN)
                 {
                 case BRIGHTNESS_UP_PIN:
+                {
                     thread_params->params->brightness = ( thread_params->params->brightness + MIN_BRIGHTNESS > MAX_BRIGHTNESS) ? MAX_BRIGHTNESS : thread_params->params->brightness + MIN_BRIGHTNESS;
                     ESP_LOGI("BTN", "Brightness Up: %d (max=255)", thread_params->params->brightness);
                     break;
+                }
 
                 case BRIGHTNESS_DOWN_PIN:
+                {
                     thread_params->params->brightness = ( thread_params->params->brightness - MIN_BRIGHTNESS < MIN_BRIGHTNESS) ? MIN_BRIGHTNESS : thread_params->params->brightness - MIN_BRIGHTNESS;
                     ESP_LOGI("BTN", "Brightness Down: %d (min=51)", thread_params->params->brightness);
                     break;
-                
+                }
+
                 case COLOR_PIN:
+                {
                     thread_params->params->color_index = (thread_params->params->color_index + 1) % NUM_COLORS;
                     ESP_LOGI("BTN", "Color: %s (index=%d)", colors[thread_params->params->color_index].first, thread_params->params->color_index);
                     break;
+                }
 
                 case MODE_PIN:
+                {
                     if (auto_mode.load())
                     {
                         ESP_LOGW("BTN", "Stop automatic mode"); 
                     }
                     auto_mode.store(false);
-                    thread_params->params->mode = (thread_params->params->mode + 1 > MAX_MODE_INDEX) ? MIN_MODE_INDEX :  thread_params->params->mode + 1;
+                    Theme current_theme = themes[thread_params->params->theme];
+                    
+                    thread_params->params->mode = (thread_params->params->mode + 1 >= current_theme.mode_count) ? 0 :  thread_params->params->mode + 1;
+                    
                     ESP_LOGI("BTN", "Mode index=%d", thread_params->params->mode);
                     break;
+                }
 
                 case SPEED_UP_PIN:
+                {
                     thread_params->params->speed = (thread_params->params->speed - MIN_SPEED_MS < MIN_SPEED_MS) ? MIN_SPEED_MS :  thread_params->params->speed - MIN_SPEED_MS;
                     ESP_LOGI("BTN", "Speed Up: %dms (min=100ms)", thread_params->params->speed);
                     break;
+                }
                 
                 case SPEED_DOWN_PIN:
+                {
                     thread_params->params->speed = (thread_params->params->speed + MIN_SPEED_MS > MAX_SPEED_MS) ? MAX_SPEED_MS :  thread_params->params->speed + MIN_SPEED_MS;
                     ESP_LOGI("BTN", "Speed Down: %dms (max=500ms)", thread_params->params->speed);
                     break;
+                }
 
                 default:
                     break;
@@ -117,13 +132,18 @@ void listener(void *pvParameters)
                 switch (thread_params->button_PIN)
                 { 
                 case COLOR_PIN:
-                    ESP_LOGI("BTN", "Color Long press detected");
+                {
+                    thread_params->params->theme = (thread_params->params->theme + 1 > NUM_THEMES) ? 0 :  thread_params->params->theme + 1;
+                    ESP_LOGI("BTN", "Switching to theme: %s", themes[thread_params->params->theme].name);
                     break;
+                }
 
                 case MODE_PIN:
+                {
                     auto_mode.store(true);
                     ESP_LOGW("BTN", "Start automatic mode"); 
                     break;
+                }
 
                 default:
                     break;

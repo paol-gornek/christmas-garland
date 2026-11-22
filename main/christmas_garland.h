@@ -33,10 +33,11 @@ constexpr int BUTTON_TASK_CORE = 1;
 // Allowed range (min/max)
 constexpr int MIN_BRIGHTNESS = 51;
 constexpr int MAX_BRIGHTNESS = 255;
-constexpr int MIN_MODE_INDEX = 0;
-constexpr int MAX_MODE_INDEX = 9;
+constexpr int NUM_MODE = 15;
 constexpr int MIN_SPEED_MS = 100;
 constexpr int MAX_SPEED_MS = 500;
+
+extern int NUM_THEMES;
 
 // Global handles
 extern led_strip_handle_t strip_handle;
@@ -52,6 +53,7 @@ struct LedParameters_t {
     uint16_t brightness;
     uint8_t color_index;
     uint8_t mode;
+    uint8_t theme;
     uint16_t speed;
 };
 
@@ -67,6 +69,14 @@ struct ListenerTask_t {
     SemaphoreHandle_t mutex;
     gpio_num_t button_PIN;
 };
+
+// theme struct
+struct Theme {
+    const char* name;
+    int modes[NUM_MODE];
+    int mode_count;
+};
+extern Theme themes[];
 
 //  task function
 constexpr int LONG_PRESS_DURATION_MS = 1000;
@@ -85,5 +95,10 @@ void anim_ghost_step(LedParameters_t params);
 void anim_random_points_step(LedParameters_t params);
 void anim_breathing_step(LedParameters_t params);
 void anim_stars_step(LedParameters_t params);
+void anim_christmas_lights_step(LedParameters_t params);
+void anim_candy_cane_step(LedParameters_t params);
+void anim_snowfall_step(LedParameters_t params);
+void anim_golden_comet_step(LedParameters_t params);
+void anim_christmas_sparkles_step(LedParameters_t params);
 
 #endif

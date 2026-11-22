@@ -384,3 +384,161 @@ void anim_stars_step(LedParameters_t params)
 
     led_strip_refresh(strip_handle);
 }
+
+
+void anim_christmas_lights_step(LedParameters_t params)
+{
+    static int offset = 0;
+
+    led_strip_clear(strip_handle);
+
+    for (int i = 0; i < NUM_LEDS; i++)
+    {
+        int pattern = (i + offset) % 12;
+
+        uint8_t r = 0, g = 0, b = 0;
+
+        if (pattern < 4)       { r = 255; g = 0;   b = 0;   }
+        else if (pattern < 8)  { r = 0;   g = 255; b = 0;   }
+        else                   { r = 255; g = 160; b = 0;   }
+
+        r = (r * params.brightness) / 255;
+        g = (g * params.brightness) / 255;
+        b = (b * params.brightness) / 255;
+
+        led_strip_set_pixel(strip_handle, i, r, g, b);
+    }
+
+    led_strip_refresh(strip_handle);
+
+    offset = (offset + 1) % 12;
+}
+
+
+void anim_candy_cane_step(LedParameters_t params)
+{
+    static int offset = 0;
+
+    led_strip_clear(strip_handle);
+
+    for (int i = 0; i < NUM_LEDS; i++)
+    {
+        bool red = ((i + offset) / 6) % 2 == 0;
+
+        uint8_t r = red ? 255 : 255;
+        uint8_t g = red ? 0 : 255;
+        uint8_t b = red ? 0 : 255;
+
+        r = (r * params.brightness) / 255;
+        g = (g * params.brightness) / 255;
+        b = (b * params.brightness) / 255;
+
+        led_strip_set_pixel(strip_handle, i, r, g, b);
+    }
+
+    led_strip_refresh(strip_handle);
+
+    offset = (offset + 1) % 12;
+}
+
+
+void anim_snowfall_step(LedParameters_t params)
+{
+    static int flakes[] = {5, 20, 38, 55, 73, 91, 108, 117};
+
+    led_strip_clear(strip_handle);
+
+    for (int i = 0; i < 8; i++)
+    {
+        int pos = flakes[i];
+
+        uint8_t brightness = params.brightness;
+
+        led_strip_set_pixel(
+            strip_handle,
+            pos,
+            brightness,
+            brightness,
+            brightness
+        );
+
+        flakes[i]++;
+
+        if (flakes[i] >= NUM_LEDS)
+            flakes[i] = 0;
+    }
+
+    led_strip_refresh(strip_handle);
+}
+
+
+void anim_golden_comet_step(LedParameters_t params)
+{
+    static int pos = 0;
+
+    led_strip_clear(strip_handle);
+
+    for (int i = 0; i < 12; i++)
+    {
+        int pixel = pos - i;
+
+        if (pixel >= 0 && pixel < NUM_LEDS)
+        {
+            int intensity = 255 - (i * 20);
+
+            if (intensity < 0)
+                intensity = 0;
+
+            uint8_t r = (255 * intensity * params.brightness) / (255 * 255);
+            uint8_t g = (180 * intensity * params.brightness) / (255 * 255);
+            uint8_t b = (30 * intensity * params.brightness) / (255 * 255);
+
+            led_strip_set_pixel(strip_handle, pixel, r, g, b);
+        }
+    }
+
+    led_strip_refresh(strip_handle);
+
+    pos++;
+
+    if (pos >= NUM_LEDS + 12)
+        pos = 0;
+}
+
+
+void anim_christmas_sparkles_step(LedParameters_t params)
+{
+    led_strip_clear(strip_handle);
+
+    for (int i = 0; i < 12; i++)
+    {
+        int pos = esp_random() % NUM_LEDS;
+        int color = esp_random() % 3;
+
+        uint8_t r = 0, g = 0, b = 0;
+
+        switch (color)
+        {
+            case 0:
+                r = 255;
+                break;
+
+            case 1:
+                g = 255;
+                break;
+
+            case 2:
+                r = 255;
+                g = 150;
+                break;
+        }
+
+        r = (r * params.brightness) / 255;
+        g = (g * params.brightness) / 255;
+        b = (b * params.brightness) / 255;
+
+        led_strip_set_pixel(strip_handle, pos, r, g, b);
+    }
+
+    led_strip_refresh(strip_handle);
+}

@@ -36,6 +36,24 @@ ListenerTask_t mode_config = {&shared_params, params_mutex, MODE_PIN};
 ListenerTask_t speed_up_config = {&shared_params, params_mutex, SPEED_UP_PIN};
 ListenerTask_t speed_down_config = {&shared_params, params_mutex, SPEED_DOWN_PIN};
 
+Animation animations[] = {
+    {0, "Fill", anim_fill_step},
+    {1, "Scanner", anim_scanner_step},
+    {2, "Blink", anim_blink_step},
+    {3, "Rainbow", anim_rainbow_step},
+    {4, "Halloween", anim_halloween_step},
+    {5, "Halloween Pulse", anim_halloween_pulse_step},
+    {6, "Ghost", anim_ghost_step},
+    {7, "Random points", anim_random_points_step},
+    {8, "Breathing", anim_breathing_step},
+    {9, "Stars", anim_stars_step},
+    {10, "Christmas Lights", anim_christmas_lights_step},
+    {11, "Candy Cane", anim_candy_cane_step},
+    {12, "Snowfall", anim_snowfall_step},
+    {13, "Golden Comet", anim_golden_comet_step},
+    {14, "Christmas Sparkles", anim_christmas_sparkles_step},
+};
+
 Theme themes[] = {
     {
         "Default",
@@ -54,7 +72,6 @@ Theme themes[] = {
     }
 };
 
-int NUM_THEMES = (sizeof(themes) / sizeof(themes[0])) - 1;
 
 void led_controller_task(void *pvParameters)
 {
@@ -72,11 +89,13 @@ void led_controller_task(void *pvParameters)
 
         bool current_auto_state = auto_mode.load();
 
+        // Start the auto mode timer
         if (current_auto_state && !previous_auto_state)
         {
             mode_start_time = esp_timer_get_time();
         }
 
+        // Switch animation when the auto mode duration is exceeded
         if (current_auto_state)
         {
             int64_t elapsed_time = (esp_timer_get_time() - mode_start_time) / 1000;
@@ -89,37 +108,38 @@ void led_controller_task(void *pvParameters)
                 thread_params->params->mode = value;
                 local_params.mode = value;
                 xSemaphoreGive(thread_params->mutex);
-
-                ESP_LOGI("BTN", "Mode index=%d", thread_params->params->mode);
-                ESP_LOGI("BTN", "Switching to animation");
                 mode_start_time = esp_timer_get_time();
             }
         }
 
         previous_auto_state = current_auto_state;
+        static int last_animation_id = -1;
         int animation_id = themes[local_params.theme].modes[local_params.mode];
 
+        // Log the animation whenever it changes (manual or automatic mode)
+        if (animation_id != last_animation_id)
+        {
+            if (current_auto_state)
+            {
+                ESP_LOGW("BTN", "Switching to animation: %s (id: %d)", animations[animation_id].name, animation_id);
+
+            }
+            else
+            {
+                ESP_LOGI("BTN", "Switching to animation: %s (id: %d)", animations[animation_id].name, animation_id);
+            }
+            last_animation_id = animation_id;
+        } 
+
         // Select the animation based on the mode
-        switch (animation_id) {
-    	    case 0: anim_fill_step(local_params);                   break;
-    	    case 1: anim_scanner_step(local_params);                break;
-    	    case 2: anim_blink_step(local_params);                  break;
-    	    case 3: anim_rainbow_step(local_params);                break;
-            case 4: anim_halloween_step(local_params);              break;
-    	    case 5: anim_halloween_pulse_step(local_params);        break;
-    	    case 6: anim_ghost_step(local_params);                  break;
-            case 7: anim_random_points_step(local_params);          break;
-            case 8: anim_breathing_step(local_params);              break;
-            case 9: anim_stars_step(local_params);                  break;
-            case 10: anim_christmas_lights_step(local_params);      break;
-            case 11: anim_candy_cane_step(local_params);            break;
-            case 12: anim_snowfall_step(local_params);              break;
-            case 13: anim_golden_comet_step(local_params);          break;
-            case 14: anim_christmas_sparkles_step(local_params);    break;
-            default:
-                ESP_LOGE("MODE_INDEX_ERROR", "Value %d, must be between %d and %d", local_params.mode, 0, NUM_MODE);
-                break;
-	    }
+        if (animation_id >= 0 && animation_id < NUM_MODE)
+        {
+            animations[animation_id].function(local_params);
+        }
+        else
+        {
+            ESP_LOGE(APP, "Invalid animation ID: %d", animation_id);
+        }
         ulTaskNotifyTake(pdTRUE, pdMS_TO_TICKS(local_params.speed));
     }
 }

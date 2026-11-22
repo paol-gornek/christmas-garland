@@ -349,14 +349,25 @@ void anim_stars_step(LedParameters_t params)
     const int max_brightness = 100;
     const int step = 2;
 
+    int active_stars = 0;
+
+    for (int i = 0; i < NUM_LEDS; i++)
+    {
+        if (direction[i] != 0)
+            active_stars++;
+    }
+
     if (counter++ >= 20)
     {
         counter = 0;
 
-        int random_led = rand() % NUM_LEDS;
+        if (active_stars < max_stars)
+        {
+            int random_led = esp_random() % NUM_LEDS;
 
-        if (direction[random_led] == 0)
-            direction[random_led] = 1;
+            if (direction[random_led] == 0)
+                direction[random_led] = 1;
+        }
     }
 
     for (int i = 0; i < NUM_LEDS; i++)

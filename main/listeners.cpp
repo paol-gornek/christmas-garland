@@ -101,11 +101,9 @@ void listener(void *pvParameters)
                         ESP_LOGW("BTN", "Stop automatic mode"); 
                     }
                     auto_mode.store(false);
-                    Theme current_theme = themes[thread_params->params->theme];
-                    
-                    thread_params->params->mode = (thread_params->params->mode + 1 >= current_theme.mode_count) ? 0 :  thread_params->params->mode + 1;
-                    
-                    ESP_LOGI("BTN", "Mode index=%d", thread_params->params->mode);
+                    thread_params->params->mode = (thread_params->params->mode + 1 >= themes[thread_params->params->theme].mode_count) ? 0 :  thread_params->params->mode + 1;
+
+
                     break;
                 }
 

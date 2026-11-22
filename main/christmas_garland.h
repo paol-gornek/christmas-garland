@@ -36,8 +36,7 @@ constexpr int MAX_BRIGHTNESS = 255;
 constexpr int NUM_MODE = 15;
 constexpr int MIN_SPEED_MS = 100;
 constexpr int MAX_SPEED_MS = 500;
-
-extern int NUM_THEMES;
+constexpr int NUM_THEMES = 3; 
 
 // Global handles
 extern led_strip_handle_t strip_handle;
@@ -69,6 +68,14 @@ struct ListenerTask_t {
     SemaphoreHandle_t mutex;
     gpio_num_t button_PIN;
 };
+
+// anim struct
+struct Animation {
+    int id;
+    const char* name;
+    void (*function)(LedParameters_t);
+};
+extern Animation animations[];
 
 // theme struct
 struct Theme {
